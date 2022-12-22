@@ -128,9 +128,8 @@ export class FirebaseService {
     const characters = charactersResponse.data.data;
     const skins = skinResponse.data.data;
 
-    const charactersObj = {};
-    const skinsObj = {};
-    // 데이터 가공 : 캐릭터 데이터 오브젝트화 + 캐릭터 스킨 코드 리스트 추가
+    const batch = firestore().batch();
+    // 데이터 가공 : 캐릭터 스킨 코드 리스트 추가, 캐릭터 이름 l10n
     characters.forEach((character) => {
       const characterSkins = skins.filter(
         (skin) => skin.characterCode === character.code,
@@ -138,24 +137,21 @@ export class FirebaseService {
       character.skinCodes = characterSkins.map((skin) => skin.code);
       character.name =
         l10n[`Character/Name/${character.code}`] ?? character.name; // l10n 데이터 업데이트가 느린 경우가 있음
-      charactersObj[character.code] = character;
+      const characterRef = firestore()
+        .collection('characters')
+        .doc(String(character.code));
+      batch.set(characterRef, character, { merge: true });
     });
-    // 데이터 가공 : 스킨 데이터 오브젝트화
+    // 데이터 가공 : 스킨 이름 l10n
     skins.forEach((skin) => {
       skin.name = l10n[`Skin/Name/${skin.code}`] ?? skin.name;
-      skinsObj[skin.code] = skin;
+      const skinsRef = firestore()
+        .collection('characterSkins')
+        .doc(String(skin.code));
+      batch.set(skinsRef, skin, { merge: true });
     });
 
-    const batch = firestore().batch();
-    const characterRef = firestore().collection('data').doc('characters');
-    const skinsRef = firestore().collection('data').doc('characterSkins');
-
-    batch.set(characterRef, { ...charactersObj }, { merge: true });
-    batch.set(skinsRef, { ...skinsObj }, { merge: true });
-
     await batch.commit();
-
-    // return characters;
   }
 
   /**
@@ -199,19 +195,18 @@ export class FirebaseService {
     );
 
     const traits = data.data;
-    const traitsObj = {};
 
+    const batch = firestore().batch();
     // 데이터 가공(이름, 툴팁 추가)
     traits.forEach((trait) => {
       trait.name = l10n[`Trait/Name/${trait.code}`] ?? null;
       trait.tooltip = l10n[`Trait/Tooltip/${trait.code}`] ?? null;
-      traitsObj[trait.code] = trait;
+
+      const traitsRef = firestore()
+        .collection('traits')
+        .doc(String(trait.code));
+      batch.set(traitsRef, trait, { merge: true });
     });
-
-    const batch = firestore().batch();
-    const traitsRef = firestore().collection('data').doc('traits');
-
-    batch.set(traitsRef, { ...traitsObj }, { merge: true });
 
     await batch.commit();
   }
@@ -441,37 +436,38 @@ export class FirebaseService {
    * 케릭터 정보 가져오기
    */
   async getCharacters() {
-    console.log(await this.cacheManager.get('/characters'));
-    const ref = firestore().collection('data').doc('characters');
-    const characters = await ref.get();
+    const ref = firestore().collection('characters');
+    const snapshot = await ref.get();
+    const characters = snapshot.docs.map((doc) => doc.data());
 
-    return characters.data();
+    return characters;
   }
 
   /**
    * 케릭터 스킨 정보 가져오기
    */
   async getCharacterSkins() {
-    const ref = firestore().collection('data').doc('characterSkins');
-    const skins = await ref.get();
+    const ref = firestore().collection('characterSkins');
+    const snapshot = await ref.get();
+    const skins = snapshot.docs.map((doc) => doc.data());
 
-    return skins.data();
+    return skins;
   }
 
   /**
    * 특성 정보 가져오기
    */
   async getTraits() {
-    const ref = firestore().collection('data').doc('traits');
-    const traits = await ref.get();
+    const ref = firestore().collection('traits');
+    const snapshot = await ref.get();
+    const traits = snapshot.docs.map((doc) => doc.data());
 
-    return traits.data();
+    return traits;
   }
 
   async getItems() {
     const ref = firestore().collection('items');
     const snapshot = await ref.get();
-
     const items = snapshot.docs.map((doc) => doc.data());
 
     return items;
