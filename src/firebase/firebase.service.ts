@@ -65,6 +65,7 @@ export class FirebaseService {
       'Skin/Name/',
       'Skill/',
       'Trait/',
+      'Infusion/',
     ];
 
     // l18n 데이터 파싱
@@ -201,6 +202,10 @@ export class FirebaseService {
     traits.forEach((trait) => {
       trait.name = l10n[`Trait/Name/${trait.code}`] ?? null;
       trait.tooltip = l10n[`Trait/Tooltip/${trait.code}`] ?? null;
+      // 코발트 인퓨전의 경우 다른 l10n데이터 참조
+      if (!trait.tooltip && trait.traitGameMode === 'Cobalt') {
+        trait.tooltip = l10n[`Infusion/Trait/Desc/${trait.code}`] ?? null;
+      }
 
       const traitsRef = firestore()
         .collection('traits')
