@@ -66,6 +66,7 @@ export class FirebaseService {
       'Skill/',
       'Trait/',
       'Infusion/',
+      'StatType/',
     ];
 
     // l18n 데이터 파싱
@@ -418,6 +419,30 @@ export class FirebaseService {
   }
 
   /**
+   * l10n 데이터중 스탯 정보만 추출해서 가공후 insert
+   */
+  async insertStats(l10n = null) {
+    if (!l10n) {
+      l10n = await this.getL10n();
+    }
+    const batch = firestore().batch();
+    // 데이터 가공
+    Object.entries(l10n).map(([key, val]: [string, string]) => {
+      const statKey = key.split('/')[1];
+      if (key.startsWith('StatType/') && key.split('/').length == 2) {
+        const stat = {
+          id: statKey.charAt(0).toLowerCase() + statKey.slice(1), // 앞글자 소문자로 변경
+          name: val.replace('%', ''),
+        };
+
+        const statsRef = firestore().collection('stats').doc(String(stat.id));
+        batch.set(statsRef, stat, { merge: true });
+      }
+    });
+
+    await batch.commit();
+  }
+  /**
    * 공식 api 해쉬 데이터 인서트
    */
   async insertHash() {
@@ -476,6 +501,14 @@ export class FirebaseService {
     const items = snapshot.docs.map((doc) => doc.data());
 
     return items;
+  }
+
+  async getStats() {
+    const ref = firestore().collection('stats');
+    const snapshot = await ref.get();
+    const stats = snapshot.docs.map((doc) => doc.data());
+
+    return stats;
   }
 
   /**

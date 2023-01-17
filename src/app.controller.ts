@@ -42,4 +42,8 @@ export class AppController {
   async items() {
     return await this.firebaseService.getItems();
   }
+  @Get('stats')
+  async stats() {
+    return await this.firebaseService.getStats();
+  }
 }
