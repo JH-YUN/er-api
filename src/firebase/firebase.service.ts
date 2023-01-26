@@ -171,11 +171,17 @@ export class FirebaseService {
         ),
     );
 
-    // firebase set
     const seasons = data.data;
-    const seasonRef = firestore().collection('data').doc('season');
 
-    seasonRef.set(seasons, { merge: true });
+    const batch = firestore().batch();
+    seasons.map((season) => {
+      const seasonRef = firestore()
+        .collection('seasons')
+        .doc(String(season.seasonID));
+      seasonRef.set(seasons, { merge: true });
+    });
+
+    await batch.commit();
   }
 
   /**
@@ -419,6 +425,28 @@ export class FirebaseService {
   }
 
   /**
+   * 시즌 정보 insert
+   */
+  async insertSeasons() {
+    const batch = firestore().batch();
+
+    const seasons = (
+      await this.httpService.axiosRef.get(
+        `${this.configService.get('ER_API_URL')}/v1/data/Season`,
+      )
+    ).data.data;
+
+    seasons.map((season) => {
+      const seasonsRef = firestore()
+        .collection('seasons')
+        .doc(String(season.seasonID));
+      batch.set(seasonsRef, season, { merge: true });
+    });
+
+    await batch.commit();
+  }
+
+  /**
    * l10n 데이터중 스탯 정보만 추출해서 가공후 insert
    */
   async insertStats(l10n = null) {
@@ -509,6 +537,14 @@ export class FirebaseService {
     const stats = snapshot.docs.map((doc) => doc.data());
 
     return stats;
+  }
+
+  async getSeasons() {
+    const ref = firestore().collection('seasons');
+    const snapshot = await ref.orderBy('seasonID', 'asc').get();
+    const seasons = snapshot.docs.map((doc) => doc.data());
+
+    return seasons;
   }
 
   /**

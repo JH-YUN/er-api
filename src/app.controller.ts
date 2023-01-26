@@ -46,4 +46,8 @@ export class AppController {
   async stats() {
     return await this.firebaseService.getStats();
   }
+  @Get('seasons')
+  async seasons() {
+    return await this.firebaseService.getSeasons();
+  }
 }
