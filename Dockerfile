@@ -35,7 +35,7 @@ ENV NODE_ENV production
 
 COPY --from=builder /app ./
 
-# EXPOSE 3000
+EXPOSE 3030
 
 # ENV PORT 3000
 
