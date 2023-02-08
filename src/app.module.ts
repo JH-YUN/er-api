@@ -9,10 +9,6 @@ import { HttpModule } from '@nestjs/axios';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath:
-        process.env.NODE_ENV === 'production'
-          ? '.production.env'
-          : '.development.env',
     }),
     FirebaseModule.forRoot(),
     CacheModule.register({
