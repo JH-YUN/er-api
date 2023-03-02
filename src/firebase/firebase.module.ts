@@ -1,14 +1,10 @@
-import { Module, DynamicModule } from '@nestjs/common';
+import { Module, DynamicModule, Global } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FirebaseService } from './firebase.service';
-import {
-  initializeApp,
-  applicationDefault,
-  cert,
-  ServiceAccount,
-} from 'firebase-admin/app';
+import { initializeApp, cert, ServiceAccount } from 'firebase-admin/app';
 import { HttpModule } from '@nestjs/axios';
 
+@Global()
 @Module({})
 export class FirebaseModule {
   static forRoot(): DynamicModule {

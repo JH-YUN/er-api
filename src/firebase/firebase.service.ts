@@ -1,17 +1,15 @@
 import { HttpService } from '@nestjs/axios';
-import { CACHE_MANAGER, Inject, Injectable, Options } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import { firestore } from 'firebase-admin';
 import { catchError, firstValueFrom } from 'rxjs';
-import { Cache } from 'cache-manager';
 
 @Injectable()
 export class FirebaseService {
   constructor(
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
   async test() {
     const ref = firestore().collection('data').doc('hash');
@@ -20,14 +18,14 @@ export class FirebaseService {
   }
 
   /**
-   * l10n 데이터 인서트 korean 데이터만
+   * l10n 데이터 인서트
    * 데이터가 상당히 크다(1.6MB 이상) 너무 자주 업데이트 ㄴㄴ
    */
-  async insertl10n() {
+  async insertl10n(language = 'Korean') {
     const { data } = (
       await firstValueFrom(
         this.httpService
-          .get(`${this.configService.get('ER_API_URL')}/v1/l10n/Korean`)
+          .get(`${this.configService.get('ER_API_URL')}/v1/l10n/${language}`)
           .pipe(
             catchError((error: AxiosError) => {
               console.error(error);
@@ -37,9 +35,11 @@ export class FirebaseService {
       )
     ).data;
 
+    const l10nPath = data.l10Path;
+
     const l10nData = (
       await firstValueFrom(
-        this.httpService.get(data.l10Path, { headers: {} }).pipe(
+        this.httpService.get(l10nPath, { headers: {} }).pipe(
           catchError((error: AxiosError) => {
             console.log(error);
             throw 'An error happened!';
@@ -90,9 +90,14 @@ export class FirebaseService {
       }
     }
 
+    // 저장
     const batch = firestore().batch();
-    const l10nRef = firestore().collection('l10n').doc('korean');
-    batch.set(l10nRef, { ...l10nObject }, { merge: true });
+    const l10nRef = firestore().collection('l10n').doc(language.toLowerCase());
+    batch.set(l10nRef, { ...l10nObject }, { merge: true }); // l10n 데이터 저장
+    const l10nDateRef = firestore()
+      .collection('l10n')
+      .doc(`${language}FilePath`);
+    batch.set(l10nDateRef, { path: l10nPath }); // 업데이트 체크용 l10n 업데이트 날짜 저장
     await batch.commit();
 
     // return l10nObject;
@@ -157,28 +162,22 @@ export class FirebaseService {
   }
 
   /**
-   * 시즌 리스트 인서트
+   * 시즌 정보 insert
    */
   async insertSeason() {
-    const { data } = await firstValueFrom(
-      this.httpService
-        .get(`${this.configService.get('ER_API_URL')}/v1/data/Season`)
-        .pipe(
-          catchError((error: AxiosError) => {
-            console.error(error);
-            throw 'An error happened!';
-          }),
-        ),
-    );
-
-    const seasons = data.data;
-
     const batch = firestore().batch();
+
+    const seasons = (
+      await this.httpService.axiosRef.get(
+        `${this.configService.get('ER_API_URL')}/v1/data/Season`,
+      )
+    ).data.data;
+
     seasons.map((season) => {
-      const seasonRef = firestore()
+      const seasonsRef = firestore()
         .collection('seasons')
         .doc(String(season.seasonID));
-      seasonRef.set(seasons, { merge: true });
+      batch.set(seasonsRef, season, { merge: true });
     });
 
     await batch.commit();
@@ -425,28 +424,6 @@ export class FirebaseService {
   }
 
   /**
-   * 시즌 정보 insert
-   */
-  async insertSeasons() {
-    const batch = firestore().batch();
-
-    const seasons = (
-      await this.httpService.axiosRef.get(
-        `${this.configService.get('ER_API_URL')}/v1/data/Season`,
-      )
-    ).data.data;
-
-    seasons.map((season) => {
-      const seasonsRef = firestore()
-        .collection('seasons')
-        .doc(String(season.seasonID));
-      batch.set(seasonsRef, season, { merge: true });
-    });
-
-    await batch.commit();
-  }
-
-  /**
    * l10n 데이터중 스탯 정보만 추출해서 가공후 insert
    */
   async insertStats(l10n = null) {
@@ -474,6 +451,16 @@ export class FirebaseService {
    * 공식 api 해쉬 데이터 인서트
    */
   async insertHash() {
+    // 저장할 해쉬 키 리스트
+    const HASH_LIST = [
+      'Character',
+      'CharacterSkin',
+      'Season',
+      'Trait',
+      'ItemArmor',
+      'ItemWeapon',
+      'ItemSkillLinker',
+    ];
     const { data } = await firstValueFrom(
       this.httpService
         .get(`${this.configService.get('ER_API_URL')}/v1/data/hash`)
@@ -484,7 +471,13 @@ export class FirebaseService {
           }),
         ),
     );
-    const hashData = data.data;
+
+    // 특정 키만 저장
+    const hashData = Object.entries(data.data).reduce((acc, cur) => {
+      if (HASH_LIST.includes(cur[0])) return { ...acc, [cur[0]]: cur[1] };
+      return acc;
+    }, {});
+
     const hashRef = firestore().collection('data').doc('hash');
 
     await hashRef.set(hashData);
@@ -550,10 +543,30 @@ export class FirebaseService {
   /**
    * l10n 데이터 가져오기
    */
-  async getL10n() {
-    const ref = firestore().collection('l10n').doc('korean');
+  async getL10n(language = 'korean') {
+    const ref = firestore().collection('l10n').doc(language);
     const l10n = await ref.get();
 
     return l10n.data();
+  }
+
+  /**
+   * l10n 최근 업데이트 날짜 가져오기
+   */
+  async getL10nFilePath(language = 'korean') {
+    const ref = firestore().collection('l10n').doc(`${language}FilePath`);
+    const path = await ref.get();
+
+    return path.data();
+  }
+
+  /**
+   * 해쉬 데이터
+   */
+  async getHash() {
+    const ref = firestore().collection('data').doc('hash');
+    const hash = await ref.get();
+
+    return hash.data();
   }
 }
