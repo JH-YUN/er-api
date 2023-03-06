@@ -37,7 +37,7 @@ export class ScheduleJobService {
     return officialApiL10nPath === firebaseL10nPath;
   }
 
-  @Cron('0 0 9-18 * *')
+  @Cron('0 30 * * * *')
   async task() {
     console.log('Task 실행');
     if (await this.comepareL10nUpdateDate()) {
