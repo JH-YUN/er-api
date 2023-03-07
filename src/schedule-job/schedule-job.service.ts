@@ -37,12 +37,12 @@ export class ScheduleJobService {
     return officialApiL10nPath === firebaseL10nPath;
   }
 
-  @Cron('0 30 * * * *')
   async task() {
     console.log('Task 실행');
+    let l10n = null;
     if (await this.comepareL10nUpdateDate()) {
       console.log('l10n데이터 업데이트');
-      await this.firebaseService.insertl10n();
+      l10n = await this.firebaseService.insertl10n();
       await this.firebaseService.insertStats();
     }
     const updateKeys = await this.getUpdateHash();
@@ -65,15 +65,15 @@ export class ScheduleJobService {
     });
     if (characterFlag) {
       console.log('케릭터 업데이트');
-      await this.firebaseService.insertCharactersAndSkins();
+      await this.firebaseService.insertCharactersAndSkins(l10n);
     }
     if (itemFlag) {
       console.log('아이템 업데이트');
-      await this.firebaseService.insertItem();
+      await this.firebaseService.insertItem(l10n);
     }
     if (traitFlag) {
       console.log('특성 업데이트');
-      await this.firebaseService.insertTrait();
+      await this.firebaseService.insertTrait(l10n);
     }
     if (seasonFlag) {
       console.log('시즌 업데이트');

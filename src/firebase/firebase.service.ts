@@ -100,7 +100,7 @@ export class FirebaseService {
     batch.set(l10nDateRef, { path: l10nPath }); // 업데이트 체크용 l10n 업데이트 날짜 저장
     await batch.commit();
 
-    // return l10nObject;
+    return l10nObject;
   }
   /**
    * 케릭터&스킨 정보 인서트
