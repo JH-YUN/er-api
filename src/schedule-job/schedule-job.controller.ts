@@ -11,8 +11,8 @@ export class ScheduleJobController {
   ) {}
 
   @Put('task')
-  async task(@Body('key') key, @Res() res: Response) {
-    if (key === 'googlecloudschedulekey') this.scheduleService.task();
+  async task(@Body('key') key, @Res({ passthrough: true }) res: Response) {
+    if (key === 'googlecloudschedulekey') await this.scheduleService.task();
     else res.status(HttpStatus.NOT_FOUND).send();
   }
 }
