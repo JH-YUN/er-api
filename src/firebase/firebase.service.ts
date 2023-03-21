@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import { firestore } from 'firebase-admin';
 import { catchError, firstValueFrom } from 'rxjs';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class FirebaseService {
@@ -448,6 +449,41 @@ export class FirebaseService {
     await batch.commit();
   }
   /**
+   * 랭커 인서트
+   */
+  async insertTopRank(mode: 'solo' | 'duo' | 'squard') {
+    let gameMode;
+    if (mode === 'solo') {
+      gameMode = 1;
+    } else if (mode === 'duo') {
+      gameMode = 2;
+    } else {
+      gameMode = 3;
+    }
+
+    const currentSeason = await this.getSeasons(true);
+
+    const res = (
+      await this.httpService.axiosRef.get(
+        `${this.configService.get('ER_API_URL')}/v1/rank/top/${
+          currentSeason.seasonID
+        }/${gameMode}`,
+      )
+    ).data;
+
+    const topRanks = res.topRanks;
+    const batch = firestore().batch();
+    const modifyDatetime = dayjs().format('YYYY-MM-DD HH:mm:ss');
+    const rankRef = firestore().collection('rank').doc(mode);
+    batch.set(rankRef, { date: modifyDatetime });
+
+    topRanks.slice(0, 100).map((el, i) => {
+      const rankModeRef = rankRef.collection('users').doc(`${i}`);
+      batch.set(rankModeRef, { ...el, mode: mode });
+    });
+    await batch.commit();
+  }
+  /**
    * 공식 api 해쉬 데이터 인서트
    */
   async insertHash() {
@@ -532,11 +568,14 @@ export class FirebaseService {
     return stats;
   }
 
-  async getSeasons() {
+  async getSeasons(isCurrent = false) {
     const ref = firestore().collection('seasons');
     const snapshot = await ref.orderBy('seasonID', 'asc').get();
     const seasons = snapshot.docs.map((doc) => doc.data());
 
+    if (isCurrent) {
+      return seasons.find((el) => el.isCurrent === 1);
+    }
     return seasons;
   }
 
@@ -558,6 +597,28 @@ export class FirebaseService {
     const path = await ref.get();
 
     return path.data();
+  }
+
+  /**
+   * 랭커 리스트
+   * @param mode 게임 모드
+   * @param count 가져올 랭커수
+   * @returns 랭커 리스트
+   */
+  async getTopRank(mode: 'solo' | 'duo' | 'squard', count = 10) {
+    const ref = firestore().collection('rank').doc(mode);
+    const snapshot = await ref
+      .collection('users')
+      .orderBy('rank', 'asc')
+      .limit(count)
+      .get();
+    const updateAt = await (await ref.get()).data().date;
+    const ranks = snapshot.docs.map((doc) => doc.data());
+
+    return {
+      updateAt: updateAt,
+      users: ranks,
+    };
   }
 
   /**

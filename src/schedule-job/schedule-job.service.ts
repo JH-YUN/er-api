@@ -37,7 +37,7 @@ export class ScheduleJobService {
     return officialApiL10nPath === firebaseL10nPath;
   }
 
-  async task() {
+  async dataUpdateTask() {
     console.log('Task 실행');
     let l10n = null;
     if (await this.comepareL10nUpdateDate()) {
@@ -84,5 +84,12 @@ export class ScheduleJobService {
       console.log('해시 데이터 업데이트');
       await this.firebaseService.insertHash();
     }
+  }
+
+  async topRankUpdateTask() {
+    console.log('랭커 업데이트');
+    await this.firebaseService.insertTopRank('solo');
+    await this.firebaseService.insertTopRank('duo');
+    await this.firebaseService.insertTopRank('squard');
   }
 }

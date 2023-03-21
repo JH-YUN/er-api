@@ -10,9 +10,23 @@ export class ScheduleJobController {
     private readonly configService: ConfigService,
   ) {}
 
-  @Put('task')
-  async task(@Body('key') key, @Res({ passthrough: true }) res: Response) {
-    if (key === 'googlecloudschedulekey') await this.scheduleService.task();
+  @Put('data-task')
+  async dataUpdateTask(
+    @Body('key') key,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    if (key === 'googlecloudschedulekey')
+      await this.scheduleService.dataUpdateTask();
+    else res.status(HttpStatus.NOT_FOUND).send();
+  }
+
+  @Put('rank-task')
+  async topRankUpdateTask(
+    @Body('key') key,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    if (key === 'googlecloudschedulekey')
+      await this.scheduleService.topRankUpdateTask();
     else res.status(HttpStatus.NOT_FOUND).send();
   }
 }
