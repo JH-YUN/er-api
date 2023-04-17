@@ -7,6 +7,7 @@ import {
   CacheTTL,
   Post,
   Param,
+  Query,
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { FirebaseService } from './firebase/firebase.service';
@@ -69,7 +70,10 @@ export class AppController {
     return await this.firebaseService.getSeasons();
   }
   @Get('ranks/:mode')
-  async ranks(@Param('mode') mode: 'solo' | 'duo' | 'squard') {
-    return await this.firebaseService.getTopRank(mode);
+  async ranks(
+    @Param('mode') mode: 'solo' | 'duo' | 'squard',
+    @Query('count') count: string | undefined,
+  ) {
+    return await this.firebaseService.getTopRank(mode, Number(count) ?? 10);
   }
 }
