@@ -8,6 +8,8 @@ import {
   Post,
   Param,
   Query,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { FirebaseService } from './firebase/firebase.service';
@@ -29,16 +31,6 @@ export class AppController {
     const res = await this.scheduleService.dataUpdateTask();
     console.log(res);
     return res;
-  }
-
-  @Get('insertTest')
-  async insertTest() {
-    return await this.firebaseService.insertTopRank('duo');
-  }
-
-  @Get('test')
-  async test() {
-    return await this.firebaseService.insertCharactersAndSkins();
   }
 
   @Get('l10n')
@@ -72,8 +64,9 @@ export class AppController {
   @Get('ranks/:mode')
   async ranks(
     @Param('mode') mode: 'solo' | 'duo' | 'squard',
-    @Query('count') count: string | undefined,
+    @Query('count', new DefaultValuePipe(10), ParseIntPipe)
+    count: number | null,
   ) {
-    return await this.firebaseService.getTopRank(mode, Number(count) ?? 10);
+    return await this.firebaseService.getTopRank(mode, count);
   }
 }
