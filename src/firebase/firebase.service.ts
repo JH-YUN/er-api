@@ -112,7 +112,7 @@ export class FirebaseService {
     }
     const charactersResponse = await firstValueFrom(
       this.httpService
-        .get(`${this.configService.get('ER_API_URL')}/v1/data/Character`)
+        .get(`${this.configService.get('ER_API_URL')}/v2/data/Character`)
         .pipe(
           catchError((error: AxiosError) => {
             console.error(error);
@@ -123,7 +123,7 @@ export class FirebaseService {
 
     const skinResponse = await firstValueFrom(
       this.httpService
-        .get(`${this.configService.get('ER_API_URL')}/v1/data/CharacterSkin`)
+        .get(`${this.configService.get('ER_API_URL')}/v2/data/CharacterSkin`)
         .pipe(
           catchError((error: AxiosError) => {
             console.error(error);
@@ -170,7 +170,7 @@ export class FirebaseService {
 
     const seasons = (
       await this.httpService.axiosRef.get(
-        `${this.configService.get('ER_API_URL')}/v1/data/Season`,
+        `${this.configService.get('ER_API_URL')}/v2/data/Season`,
       )
     ).data.data;
 
@@ -193,7 +193,7 @@ export class FirebaseService {
     }
     const { data } = await firstValueFrom(
       this.httpService
-        .get(`${this.configService.get('ER_API_URL')}/v1/data/Trait`)
+        .get(`${this.configService.get('ER_API_URL')}/v2/data/Trait`)
         .pipe(
           catchError((error: AxiosError) => {
             console.error(error);
@@ -232,7 +232,7 @@ export class FirebaseService {
     }
     const itemArmorResponse = await firstValueFrom(
       this.httpService
-        .get(`${this.configService.get('ER_API_URL')}/v1/data/ItemArmor`)
+        .get(`${this.configService.get('ER_API_URL')}/v2/data/ItemArmor`)
         .pipe(
           catchError((error: AxiosError) => {
             console.error(error);
@@ -242,7 +242,7 @@ export class FirebaseService {
     );
     const itemWeaponResponse = await firstValueFrom(
       this.httpService
-        .get(`${this.configService.get('ER_API_URL')}/v1/data/ItemWeapon`)
+        .get(`${this.configService.get('ER_API_URL')}/v2/data/ItemWeapon`)
         .pipe(
           catchError((error: AxiosError) => {
             console.error(error);
@@ -457,8 +457,10 @@ export class FirebaseService {
       gameMode = 1;
     } else if (mode === 'duo') {
       gameMode = 2;
-    } else {
+    } else if (mode === 'squard') {
       gameMode = 3;
+    } else {
+      throw new Error('존재하지 않는 게임 모드입니다.');
     }
 
     const currentSeason = await this.getSeasons(true);
@@ -472,6 +474,7 @@ export class FirebaseService {
     ).data;
 
     const topRanks = res.topRanks;
+
     const batch = firestore().batch();
     const modifyDatetime = dayjs().format('YYYY-MM-DD HH:mm:ss');
     const rankRef = firestore().collection('rank').doc(mode);
@@ -484,22 +487,53 @@ export class FirebaseService {
     await batch.commit();
   }
   /**
-   * 공식 api 해쉬 데이터 인서트
+   * 공식 api v1 해쉬 데이터 인서트
    */
-  async insertHash() {
-    // 저장할 해쉬 키 리스트
+  async insertHashV1() {
+    // 저장할 해쉬 키 리스트(v1 api)
+    const HASH_LIST = ['ItemSkillLinker'];
+
+    const { data } = await firstValueFrom(
+      this.httpService
+        .get(`${this.configService.get('ER_API_URL')}/v1/data/hash`)
+        .pipe(
+          catchError((error: AxiosError) => {
+            console.error(error);
+            throw 'An error happened!';
+          }),
+        ),
+    );
+
+    // 특정 키만 저장
+    const hashData = Object.entries(data.data).reduce((acc, cur) => {
+      if (HASH_LIST.includes(cur[0])) return { ...acc, [cur[0]]: cur[1] };
+      return acc;
+    }, {});
+
+    const hashRef = firestore().collection('data').doc('hash');
+
+    await hashRef.set(hashData);
+  }
+
+  /**
+   * 공식 api v2 해쉬 데이터 인서트
+   */
+  async insertHashV2() {
+    // 저장할 해쉬 키 리스트 (v2 api)
     const HASH_LIST = [
+      'Season',
+      'TacticalSkillSetGroup',
       'Character',
       'CharacterSkin',
       'Season',
       'Trait',
       'ItemArmor',
       'ItemWeapon',
-      'ItemSkillLinker',
     ];
+
     const { data } = await firstValueFrom(
       this.httpService
-        .get(`${this.configService.get('ER_API_URL')}/v1/data/hash`)
+        .get(`${this.configService.get('ER_API_URL')}/v2/data/hash`)
         .pipe(
           catchError((error: AxiosError) => {
             console.error(error);

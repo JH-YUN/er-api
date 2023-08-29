@@ -82,14 +82,13 @@ export class ScheduleJobService {
 
     if (characterFlag || itemFlag || traitFlag || seasonFlag) {
       console.log('해시 데이터 업데이트');
-      await this.firebaseService.insertHash();
+      await this.firebaseService.insertHashV1();
+      await this.firebaseService.insertHashV2();
     }
   }
 
   async topRankUpdateTask() {
     console.log('랭커 업데이트');
-    await this.firebaseService.insertTopRank('solo');
-    await this.firebaseService.insertTopRank('duo');
     await this.firebaseService.insertTopRank('squard');
   }
 }
