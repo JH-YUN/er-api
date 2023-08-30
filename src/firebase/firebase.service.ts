@@ -521,7 +521,6 @@ export class FirebaseService {
   async insertHashV2() {
     // 저장할 해쉬 키 리스트 (v2 api)
     const HASH_LIST = [
-      'Season',
       'TacticalSkillSetGroup',
       'Character',
       'CharacterSkin',

@@ -22,6 +22,7 @@ export class OfficialApiService {
   async getHash() {
     // 확인할 해쉬 목록
     const HASH_LIST = [
+      'TacticalSkillSetGroup',
       'Character',
       'CharacterSkin',
       'Season',
@@ -30,10 +31,9 @@ export class OfficialApiService {
       'ItemWeapon',
       'ItemSkillLinker',
     ];
-
     const res = (
       await this.httpService.axiosRef.get(
-        `${this.configService.get('ER_API_URL')}/v1/data/hash`,
+        `${this.configService.get('ER_API_URL')}/v2/data/hash`,
       )
     ).data.data;
 
