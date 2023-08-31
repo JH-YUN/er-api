@@ -51,6 +51,7 @@ export class ScheduleJobService {
     let itemFlag = false;
     let traitFlag = false;
     let seasonFlag = false;
+    let tacticalSkillFlag = false;
     updateKeys.map((key) => {
       const keyLower = key.toLowerCase();
       if (keyLower.indexOf('character') >= 0) {
@@ -61,8 +62,22 @@ export class ScheduleJobService {
         traitFlag = true;
       } else if (keyLower === 'season') {
         seasonFlag = true;
+      } else if (keyLower === 'tacticalskillsetgroup') {
+        tacticalSkillFlag = true;
       }
     });
+
+    // 업데이트 내역이 있을 경우 l10n 데이터 불러오기
+    if (
+      (characterFlag ||
+        itemFlag ||
+        traitFlag ||
+        seasonFlag ||
+        tacticalSkillFlag) &&
+      l10n === null
+    ) {
+      l10n = this.firebaseService.getL10n();
+    }
     if (characterFlag) {
       console.log('케릭터 업데이트');
       await this.firebaseService.insertCharactersAndSkins(l10n);
@@ -78,6 +93,10 @@ export class ScheduleJobService {
     if (seasonFlag) {
       console.log('시즌 업데이트');
       await this.firebaseService.insertSeason();
+    }
+    if (tacticalSkillFlag) {
+      console.log('전술 스킬 업데이트');
+      await this.firebaseService.insertTacticalSkill(l10n);
     }
 
     if (characterFlag || itemFlag || traitFlag || seasonFlag) {

@@ -486,6 +486,68 @@ export class FirebaseService {
     });
     await batch.commit();
   }
+
+  /**
+   * 전술 스킬 인서트
+   */
+  async insertTacticalSkill(l10n = null) {
+    if (!l10n) {
+      l10n = await this.getL10n;
+    }
+
+    // 전술 스킬 group, l10n key 매핑
+    const taticalSkillgroupToKeyMap = {
+      // group : l10n key
+      30: 4000000,
+      40: 4001000,
+      50: 4101000,
+      60: 4102000,
+      70: 4103000,
+      80: 4104000,
+      90: 4105000,
+      110: 4107000,
+      120: 4110000,
+      130: 4112000,
+      140: 4113000,
+      150: 4108000,
+      500010: 4501000,
+      500020: 4502000,
+      500030: 4503000,
+      500040: 4504000,
+      500050: 4505000,
+      500060: 4506000,
+      500070: 4507000,
+      500080: 4508000,
+      500090: 4509000,
+      500100: 4510000,
+      500110: 4511000,
+    };
+
+    const taticalSkillList = (
+      await this.httpService.axiosRef.get(
+        `${this.configService.get('ER_API_URL')}/v2/data/TacticalSkillSetGroup`,
+      )
+    ).data;
+
+    const taticalSkill = taticalSkillList.map((skill) => {
+      const l10Key = taticalSkillgroupToKeyMap[skill.group];
+      return {
+        ...skill,
+        name: l10n[`Skill/Group/Name/${l10Key}`] ?? '',
+        desc: l10n[`Skill/Group/LobbyDesc/${l10Key}`] ?? '',
+      };
+    });
+
+    const batch = firestore().batch();
+    taticalSkill.forEach((skill) => {
+      const skillRef = firestore()
+        .collection('taticalSkills')
+        .doc(String(skill.group));
+      skillRef.set(skill, { merge: true });
+    });
+
+    await batch.commit();
+  }
   /**
    * 공식 api v1 해쉬 데이터 인서트
    */
