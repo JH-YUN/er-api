@@ -527,7 +527,7 @@ export class FirebaseService {
       await this.httpService.axiosRef.get(
         `${this.configService.get('ER_API_URL')}/v2/data/TacticalSkillSetGroup`,
       )
-    ).data;
+    ).data.data;
 
     const taticalSkill = taticalSkillList.map((skill) => {
       const l10Key = taticalSkillgroupToKeyMap[skill.group];
