@@ -40,7 +40,7 @@ export class ScheduleJobService {
   async dataUpdateTask() {
     console.log('Task 실행');
     let l10n = null;
-    if (await this.comepareL10nUpdateDate()) {
+    if (!(await this.comepareL10nUpdateDate())) {
       console.log('l10n데이터 업데이트');
       l10n = await this.firebaseService.insertl10n();
       await this.firebaseService.insertStats();
@@ -67,17 +67,22 @@ export class ScheduleJobService {
       }
     });
 
-    // 업데이트 내역이 있을 경우 l10n 데이터 불러오기
     if (
-      (characterFlag ||
-        itemFlag ||
-        traitFlag ||
-        seasonFlag ||
-        tacticalSkillFlag) &&
-      l10n === null
+      characterFlag ||
+      itemFlag ||
+      traitFlag ||
+      seasonFlag ||
+      tacticalSkillFlag
     ) {
-      l10n = this.firebaseService.getL10n();
+      console.log('해시 데이터 업데이트');
+      await this.firebaseService.insertHashV1();
+      await this.firebaseService.insertHashV2();
+      // 업데이트 내역이 있을 경우 l10n 데이터 불러오기
+      if (l10n === null) {
+        l10n = this.firebaseService.getL10n();
+      }
     }
+
     if (characterFlag) {
       console.log('케릭터 업데이트');
       await this.firebaseService.insertCharactersAndSkins(l10n);
@@ -97,12 +102,6 @@ export class ScheduleJobService {
     if (tacticalSkillFlag) {
       console.log('전술 스킬 업데이트');
       await this.firebaseService.insertTacticalSkill(l10n);
-    }
-
-    if (characterFlag || itemFlag || traitFlag || seasonFlag) {
-      console.log('해시 데이터 업데이트');
-      await this.firebaseService.insertHashV1();
-      await this.firebaseService.insertHashV2();
     }
   }
 

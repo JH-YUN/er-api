@@ -26,13 +26,6 @@ export class AppController {
     private readonly officialService: OfficialApiService,
   ) {}
 
-  @Get('insert')
-  async insert() {
-    const res = await this.scheduleService.dataUpdateTask();
-    console.log(res);
-    return res;
-  }
-
   @Get('l10n')
   async l10n() {
     return await this.firebaseService.getL10n();
@@ -60,6 +53,10 @@ export class AppController {
   @Get('seasons')
   async seasons() {
     return await this.firebaseService.getSeasons();
+  }
+  @Get('tactical-skills')
+  async tacticalSkills() {
+    return await this.firebaseService.getTacticalSkills();
   }
   @Get('ranks/:mode')
   async ranks(

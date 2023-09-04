@@ -492,7 +492,7 @@ export class FirebaseService {
    */
   async insertTacticalSkill(l10n = null) {
     if (!l10n) {
-      l10n = await this.getL10n;
+      l10n = await this.getL10n();
     }
 
     // 전술 스킬 group, l10n key 매핑
@@ -529,6 +529,7 @@ export class FirebaseService {
       )
     ).data.data;
 
+    // 데이터 가공, 이름, 상세 추가
     const taticalSkill = taticalSkillList.map((skill) => {
       const l10Key = taticalSkillgroupToKeyMap[skill.group];
       return {
@@ -538,12 +539,13 @@ export class FirebaseService {
       };
     });
 
+
     const batch = firestore().batch();
     taticalSkill.forEach((skill) => {
       const skillRef = firestore()
-        .collection('taticalSkills')
+        .collection('tacticalSkills')
         .doc(String(skill.group));
-      skillRef.set(skill, { merge: true });
+      batch.set(skillRef, skill, { merge: true });
     });
 
     await batch.commit();
@@ -672,6 +674,14 @@ export class FirebaseService {
       return seasons.find((el) => el.isCurrent === 1);
     }
     return seasons;
+  }
+
+  async getTacticalSkills() {
+    const ref = firestore().collection('tacticalSkills');
+    const snapshot = await ref.get();
+    const skills = snapshot.docs.map((doc) => doc.data());
+
+    return skills;
   }
 
   /**
