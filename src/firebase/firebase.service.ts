@@ -478,7 +478,10 @@ export class FirebaseService {
     const batch = firestore().batch();
     const modifyDatetime = dayjs().format('YYYY-MM-DD HH:mm:ss');
     const rankRef = firestore().collection('rank').doc(mode);
-    batch.set(rankRef, { date: modifyDatetime });
+    batch.set(rankRef, {
+      date: modifyDatetime,
+      seasonId: currentSeason.seasonID,
+    });
 
     topRanks.slice(0, 100).map((el, i) => {
       const rankModeRef = rankRef.collection('users').doc(`${i}`);
@@ -538,7 +541,6 @@ export class FirebaseService {
         desc: l10n[`Skill/Group/LobbyDesc/${l10Key}`] ?? '',
       };
     });
-
 
     const batch = firestore().batch();
     taticalSkill.forEach((skill) => {
