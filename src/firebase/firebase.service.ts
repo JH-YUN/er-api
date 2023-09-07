@@ -719,11 +719,14 @@ export class FirebaseService {
       .orderBy('rank', 'asc')
       .limit(count)
       .get();
-    const updateAt = await (await ref.get()).data().date;
+    const refData = (await ref.get()).data();
+    const updateAt = refData.date;
+    const seasonId = refData.seasonId;
     const ranks = snapshot.docs.map((doc) => doc.data());
 
     return {
       updateAt: updateAt,
+      seasonId: seasonId,
       users: ranks,
     };
   }
