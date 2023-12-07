@@ -53,24 +53,17 @@ export class FirebaseService {
 
     // l10n 데이터중 가져올 데이터 카테고리
     const categories = [
-      'Item/Name/',
-      'Item/Effects/',
       'Item/Skills/',
-      'Character/',
-      'Monster/',
+      'Character/Name/',
       'ItemType/',
-      'WeaponType/',
-      'ArmorType/',
-      'SpecialItemType/',
-      'MasteryType/',
       'Skin/Name/',
-      'Skill/',
+      'Skill/Group/',
       'Trait/',
       'Infusion/',
       'StatType/',
     ];
 
-    // l18n 데이터 파싱
+    //l10n 데이터 파싱
     for (const el of l10nData.split('\r\n')) {
       const [key, value] = el.split('┃');
       if (
