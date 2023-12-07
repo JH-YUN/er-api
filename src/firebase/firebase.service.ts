@@ -59,7 +59,7 @@ export class FirebaseService {
       'Skin/Name/',
       'Skill/Group/',
       'Trait/',
-      'Infusion/',
+      'Infusion/Trait/Desc/',
       'StatType/',
     ];
 
@@ -87,7 +87,7 @@ export class FirebaseService {
     // 저장
     const batch = firestore().batch();
     const l10nRef = firestore().collection('l10n').doc(language.toLowerCase());
-    batch.set(l10nRef, { ...l10nObject }, { merge: true }); // l10n 데이터 저장
+    batch.set(l10nRef, { ...l10nObject }); // l10n 데이터 저장
     const l10nDateRef = firestore()
       .collection('l10n')
       .doc(`${language}FilePath`);
